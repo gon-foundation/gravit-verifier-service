@@ -137,6 +137,8 @@ function gv_record(array $acct, array $meta, string $result): array {
             'request_sha256' => $meta['request_sha256'], 'result_sha256' => hash('sha256', $result),
             'prev_entry_hash' => $prev['entry_hash'],
         ];
+        // Not part of the DecisionRecord (decision_id and golden vectors are unchanged); signed with the receipt.
+        if (isset($meta['registry_status'])) { $receipt['registry_status'] = $meta['registry_status']; }
         $canon = gv_canon($receipt);
         $sig = base64_encode(sodium_crypto_sign_detached($canon, $k['sk']));
         $hash = hash('sha256', $canon);
