@@ -148,12 +148,15 @@ def main():
     if "log_proof" in job:
         return log_proof(job["log_proof"])
     registry = None
+    registry_status = "none"  # which registry the decision used: "test" (published test keys), "own" (supplied by the caller), "none"
     try:
         if job.get("registry"):
+            registry_status = "own"
             r = job["registry"]
             registry = VerifierRegistry.from_bytes(r["registry"].encode(), r["signatures"],
                                                    TrustRoot.from_bytes(r["trust_root"].encode()))
         elif job.get("use_test_registry", True):
+            registry_status = "test"
             registry = VerifierRegistry.from_file(DATA / "test-registry.json",
                                                   TrustRoot.from_file(DATA / "test-trust-root.json"))
     except (RegistryError, KeyError, TypeError, ValueError) as e:
@@ -171,7 +174,7 @@ def main():
     meta = {"ok": True, "request_sha256": hashlib.sha256(canon(job.get("artifact")).encode()).hexdigest(),
             "decision_id": d.decision_id, "artifact_id": d.artifact_id, "status": d.status.value,
             "state": d.final_epistemic_state.value if d.final_epistemic_state else None,
-            "verifier_version": gravit_verifier.__version__}
+            "verifier_version": gravit_verifier.__version__, "registry_status": registry_status}
     sys.stdout.write(canon(meta) + "\n" + result + "\n")
 
 if __name__ == "__main__":
